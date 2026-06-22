@@ -7,6 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(5000),
   CLIENT_URL: z.string().url().default("http://localhost:5173"),
+  ALLOWED_ORIGINS: z.string().optional(),
   MONGODB_URI: z.string().min(1),
   REDIS_URL: z.string().default("redis://localhost:6379"),
   REDIS_REQUIRED: z.coerce.boolean().default(false),
