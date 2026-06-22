@@ -1,0 +1,61 @@
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import mongoSanitize from "express-mongo-sanitize";
+import helmet from "helmet";
+import morgan from "morgan";
+import { env, isProduction } from "./config/env.js";
+import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
+import { apiLimiter, requestId } from "./middleware/security.middleware.js";
+import announcementRoutes from "./modules/announcement/announcement.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
+import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
+import departmentRoutes from "./modules/department/department.routes.js";
+import discussionRoutes from "./modules/discussion/discussion.routes.js";
+import eventRoutes from "./modules/event/event.routes.js";
+import leaveRoutes from "./modules/leave/leave.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
+import payrollRoutes from "./modules/payroll/payroll.routes.js";
+import projectRoutes from "./modules/project/project.routes.js";
+import reportRoutes from "./modules/report/report.routes.js";
+import roleRoutes from "./modules/role/role.routes.js";
+import taskRoutes from "./modules/task/task.routes.js";
+import ticketRoutes from "./modules/ticket/ticket.routes.js";
+import userRoutes from "./modules/user/user.routes.js";
+
+export function createApp() {
+  const app = express();
+  app.set("trust proxy", 1);
+  app.use(requestId);
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
+  app.use(compression());
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
+  app.use(mongoSanitize());
+  app.use(apiLimiter);
+  if (!isProduction) app.use(morgan("dev"));
+
+  app.get("/health", (_req, res) => res.json({ success: true, data: { status: "ok", service: "Cybernaut ERP" } }));
+  app.use("/api/auth", authRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/departments", departmentRoutes);
+  app.use("/api/roles", roleRoutes);
+  app.use("/api/employees", userRoutes);
+  app.use("/api/projects", projectRoutes);
+  app.use("/api/tasks", taskRoutes);
+  app.use("/api/reports", reportRoutes);
+  app.use("/api/announcements", announcementRoutes);
+  app.use("/api/discussions", discussionRoutes);
+  app.use("/api/leaves", leaveRoutes);
+  app.use("/api/payroll", payrollRoutes);
+  app.use("/api/events", eventRoutes);
+  app.use("/api/tickets", ticketRoutes);
+  app.use("/api/notifications", notificationRoutes);
+
+  app.use(notFoundHandler);
+  app.use(errorHandler);
+  return app;
+}
